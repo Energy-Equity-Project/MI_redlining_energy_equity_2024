@@ -215,137 +215,152 @@ mi_doe_redlining <- mi_doe %>%
     by = c("gi"="geoid")
   )
 
+outputs_dir <- "outputs"
+write.csv(mi_doe_redlining, file.path(outputs_dir, "mi_doe_redlining.csv"), row.names = FALSE)
 
 
-# Summary statistics on mi_doe_redlining dataframe
-# Note: gi = census tract number, h_count = number of households, burden = utility/energy burden, income = household income
-
-#thinking abt number of household instead of %, household count vs census tract
-
-mi_doe_redlining <- mi_doe_redlining %>%
-  mutate(category = factor(
-    category,
-    levels = c("Best", "Still Desirable", "Definitely Declining", "Hazardous", "Commercial", "Industrial", "Industrial and Commercial")
-  ))
-
-# mi_doe_redlining %>% filter(!(category %in% c("Commercial", "Industrial", "Industrial and Commercial"))
-
-# Number of census tracts in each HOLC category
-mi_doe_redlining %>%
-  group_by(category) %>%
-  count() %>%
-  ungroup()
-
-census_holc <- mi_doe_redlining %>% 
-  #taking the gi and category columns into temp
-  select(gi, category) %>% 
-  #removing columns that have na values for category and gi
-  filter(!is.na(category) & !is.na(gi)) %>% 
-  #taking 1/5 of the columns, removing duplicates
-  distinct() %>% 
-  #grouping by category
-  group_by(category) %>% 
-  #counting the number of gi that are in that category
-  tally() %>% 
-  #ungrouping the data
-  ungroup() 
-
-oggplot(census_holc, aes(x=category, y=n)) + 
-  #making a bar chart
-  geom_bar(stat = "identity") +
-  # setting x label to "HOLC Category"
-  xlab("HOLC Category") +
-  #setting y label to "Number of Census Tracts"
-  ylab("Number of Census Tracts")
-
-
-# Number of households in each HOLC category
-households_holc <- mi_doe_redlining %>%
-  # taking gi, category, and h_count columns
-  select(gi, category, h_count) %>%
-  # removing rows with na values for gi,cateogry, or h_count
-  filter(!is.na(category) & !is.na(gi) & !is.na(h_count)) %>% 
-  # grouping by category
-  group_by(category) %>%
-  # sum to find # of houses for each category
-  summarise(sum_h = sum(h_count, na.rm = TRUE)) %>%
-  # ungrouping from category
-  ungroup() %>%
-  # adding column of % of houses in each category of total
-  mutate(perc_h = sum_h/sum(sum_h, na.rm = TRUE))
-
-ggplot(households_holc, aes(x=category, y=sum_h)) + 
-  #making a bar chart
-  geom_bar(stat = "identity") +
-  #setting x label to "HOLC Category"
-  xlab("HOLC Category") +
-  #setting y label to "Number of Households"
-  ylab("Number of Households")
-
-
-# Average or median energy burden in each HOLC category
-avg_burden_holc <- mi_doe_redlining %>%
-  # removing rows with na values for category
-  filter(!is.na(category)) %>%
-  # grouping by category
-  group_by(category) %>%
-  # taking the weighted mean and median
-  summarise(mean_burden = weighted.mean(burden, h_count, na.rm = TRUE),
-            median_burden = weightedMedian(burden, h_count, na.rm = TRUE)) %>%
-  #ungrouping from category
-  ungroup()
-
-avg_burden_holc_long <- avg_burden_holc %>%
-  #making the dataframe tall 
-  pivot_longer(cols = c("mean_burden", "median_burden"),
-               names_to = "avg_type",
-               values_to = "avg_val"
-  )
-
-ggplot(avg_burden_holc_long, aes(x = category, y = avg_val, fill = avg_type)) +
-  #creates side-by-side bar chart
-  geom_col(position = "dodge") +
-  #sets the color palette from brewer package
-  scale_fill_brewer(palette = "Paired") +
-  #labels x as "HOLC Category"
-  xlab("HOLC Category") +
-  #labels y as "Average Energy Burden"
-  ylab("Average Energy Burden")
-
-
-# Average or median income in each HOLC category
-avg_income_holc <- mi_doe_redlining %>%
-  # removing rows with na values for category
-  filter(!is.na(category)) %>%
-  # grouping by category
-  group_by(category) %>%
-  # finding the weighted median income
-  summarise(avg_income = weightedMedian(income, h_count)) %>%
-  # ungrouping from category
-  ungroup()
-
-# Percent of households within FPL
-household_fpl_holc <- mi_doe_redlining %>%
-  # taking gi, category, fpl, and h_count columns
-  select(gi, category, h_count, fpl) %>%
-  # removing rows with na values for gi,cateogry, or h_count
-  filter(!is.na(category) & !is.na(gi) & !is.na(h_count))%>% 
-  # grouping by category and fpl
-  group_by(category, fpl) %>%
-  # sum to find # of houses for each category and fpl
-  summarise(sum_h = sum(h_count, na.rm = TRUE)) %>%
-  #trying to add column for percent of households
-  mutate(perc_h = sum_h/sum(sum_h, na.rm = TRUE)) %>%
-  # ungrouping from category
-  ungroup()
-
-ggplot(household_fpl_holc, aes(fill=fpl, y=perc_h, x=category)) + 
-  #making stacked bar chart
-  geom_bar(position="stack", stat="identity") +
-  #setting colors
-  scale_fill_brewer(palette = "RdYlBu") +
-  # labeling x axis "HOLC Category"
-  xlab("HOLC Category") +
-  # labeling y axis "% Households in FPL"
-  ylab("Percent of Households in each FPL")
-
+# # Summary statistics on mi_doe_redlining dataframe
+# # Note: gi = census tract number, h_count = number of households, burden = utility/energy burden, income = household income
+# 
+# #thinking abt number of household instead of %, household count vs census tract
+# 
+# mi_doe_redlining <- mi_doe_redlining %>%
+#   mutate(category = factor(
+#     category,
+#     levels = c("Best", "Still Desirable", "Definitely Declining", "Hazardous", "Commercial", "Industrial", "Industrial and Commercial")
+#   ))
+# 
+# # mi_doe_redlining %>% filter(!(category %in% c("Commercial", "Industrial", "Industrial and Commercial"))
+# 
+# # Number of census tracts in each HOLC category
+# mi_doe_redlining %>%
+#   group_by(category) %>%
+#   count() %>%
+#   ungroup()
+# 
+# census_holc <- mi_doe_redlining %>% 
+#   #taking the gi and category columns into temp
+#   select(gi, category) %>% 
+#   #removing columns that have na values for category and gi
+#   filter(!is.na(category) & !is.na(gi)) %>% 
+#   #taking 1/5 of the columns, removing duplicates
+#   distinct() %>% 
+#   #grouping by category
+#   group_by(category) %>% 
+#   #counting the number of gi that are in that category
+#   tally() %>% 
+#   #ungrouping the data
+#   ungroup() 
+# 
+# ggplot(census_holc, aes(x=category, y=n)) + 
+#   #making a bar chart
+#   geom_bar(stat = "identity") +
+#   # setting x label to "HOLC Category"
+#   xlab("HOLC Category") +
+#   #setting y label to "Number of Census Tracts"
+#   ylab("Number of Census Tracts")
+# 
+# 
+# # Number of households in each HOLC category
+# households_holc <- mi_doe_redlining %>%
+#   # taking gi, category, and h_count columns
+#   select(gi, category, h_count) %>%
+#   # removing rows with na values for gi,cateogry, or h_count
+#   filter(!is.na(category) & !is.na(gi) & !is.na(h_count)) %>% 
+#   # grouping by category
+#   group_by(category) %>%
+#   # sum to find # of houses for each category
+#   summarise(sum_h = sum(h_count, na.rm = TRUE)) %>%
+#   # ungrouping from category
+#   ungroup() %>%
+#   # adding column of % of houses in each category of total
+#   mutate(perc_h = sum_h/sum(sum_h, na.rm = TRUE))
+# 
+# ggplot(households_holc, aes(x=category, y=sum_h)) + 
+#   #making a bar chart
+#   geom_bar(stat = "identity") +
+#   #setting x label to "HOLC Category"
+#   xlab("HOLC Category") +
+#   #setting y label to "Number of Households"
+#   ylab("Number of Households")
+# 
+# #y axis as ____?? for the second one
+# 
+# # Average or median energy burden in each HOLC category
+# avg_burden_holc <- mi_doe_redlining %>%
+#   # removing rows with na values for category
+#   filter(!is.na(category)) %>%
+#   # grouping by category
+#   group_by(category) %>%
+#   # taking the weighted mean and median
+#   summarise(mean_burden = weighted.mean(burden, h_count, na.rm = TRUE),
+#             median_burden = weightedMedian(burden, h_count, na.rm = TRUE)) %>%
+#   #ungrouping from category
+#   ungroup()
+# 
+# avg_burden_holc_long <- avg_burden_holc %>%
+#   #making the dataframe tall 
+#   pivot_longer(cols = c("mean_burden", "median_burden"),
+#                names_to = "avg_type",
+#                values_to = "avg_val"
+#   )
+# 
+# ggplot(avg_burden_holc_long, aes(x = category, y = avg_val, fill = avg_type)) +
+#   #creates side-by-side bar chart
+#   geom_col(position = "dodge") +
+#   #sets the color palette from brewer package
+#   scale_fill_brewer(palette = "Paired") +
+#   #labels x as "HOLC Category"
+#   xlab("HOLC Category") +
+#   #labels y as "Average Energy Burden"
+#   ylab("Average Energy Burden")
+# 
+# 
+# # Average or median income in each HOLC category
+# avg_income_holc <- mi_doe_redlining %>%
+#   # removing rows with na values for category
+#   filter(!is.na(category)) %>%
+#   # grouping by category
+#   group_by(category) %>%
+#   # finding the weighted median income
+#   summarise(avg_income = weightedMedian(income, h_count)) %>%
+#   # ungrouping from category
+#   ungroup()
+# 
+# # Percent of households within FPL
+# household_fpl_holc <- mi_doe_redlining %>%
+#   # taking gi, category, fpl, and h_count columns
+#   select(gi, category, h_count, fpl) %>%
+#   # removing rows with na values for gi,cateogry, or h_count
+#   filter(!is.na(category) & !is.na(gi) & !is.na(h_count))%>% 
+#   # grouping by category and fpl
+#   group_by(category, fpl) %>%
+#   # sum to find # of houses for each category and fpl
+#   summarise(sum_h = sum(h_count, na.rm = TRUE)) %>%
+#   #trying to add column for percent of households
+#   mutate(perc_h = sum_h/sum(sum_h, na.rm = TRUE)) %>%
+#   # ungrouping from category
+#   ungroup()
+# 
+# ggplot(household_fpl_holc, aes(fill=fpl, y=perc_h, x=category)) + 
+#   #making stacked bar chart
+#   geom_bar(position="stack", stat="identity") +
+#   #setting colors
+#   scale_fill_brewer(palette = "RdYlBu") +
+#   # labeling x axis "HOLC Category"
+#   xlab("HOLC Category") +
+#   # labeling y axis "% Households in FPL"
+#   ylab("Percent of Households in each FPL")
+# 
+# ggplot(household_fpl_holc, aes(fill=fpl, y=perc_h, x=category)) + 
+#   #making stacked bar chart
+#   geom_bar(position="dodge", stat="identity") +
+#   #setting colors
+#   scale_fill_brewer(palette = "RdYlBu") +
+#   # labeling x axis "HOLC Category"
+#   xlab("HOLC Category") +
+#   # labeling y axis "% Households in FPL"
+#   ylab("Percent of Households in each FPL")
+# 
+# # but y-axis as _____ (first one)
+# 
