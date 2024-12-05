@@ -38,6 +38,21 @@ households_holc <- mi_doe_redlining %>%
   # adding column of % of houses in each category of total
   mutate(perc_h = sum_h/sum(sum_h, na.rm = TRUE))
 
+# Number of households in each FPL category
+households_fpl <- mi_doe_redlining %>%
+  # taking gi, fpl, and h_count columns
+  select(gi, fpl, h_count) %>%
+  # removing rows with na values for gi,fpl, or h_count
+  filter(!is.na(fpl) & !is.na(gi) & !is.na(h_count)) %>% 
+  # grouping by fpl
+  group_by(fpl) %>%
+  # sum to find # of houses for each fpl
+  summarise(sum_h = sum(h_count, na.rm = TRUE)) %>%
+  # ungrouping from fpl
+  ungroup() %>%
+  # adding column of % of houses in each fpl of total
+  mutate(perc_h = sum_h/sum(sum_h, na.rm = TRUE))
+
 # Average or median energy burden in each HOLC category
 avg_burden_holc <- mi_doe_redlining %>%
   # removing rows with na values for category
@@ -83,6 +98,16 @@ holc_fpl_whisker <- data.frame(
   burden = rep(mi_doe_redlining_no_na$burden, mi_doe_redlining_no_na$h_count),
   category = rep(mi_doe_redlining_no_na$category, mi_doe_redlining_no_na$h_count)
 )
+
+summary_data <- holc_fpl_whisker %>%
+  group_by(category, fpl) %>%
+  summarise(
+    Min = min(burden),
+    Q1 = quantile(burden, 0.25),
+    Median = median(burden),
+    Q3 = quantile(burden, 0.75),
+    Max = max(burden)
+  )
   
 
 
