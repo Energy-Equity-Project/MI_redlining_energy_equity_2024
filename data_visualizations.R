@@ -86,6 +86,7 @@ holc_fpl_whisker %>%
   ylab("Median Energy Burden") + 
   #setting colors
   scale_fill_brewer(palette = "RdYlBu") +
+  geom_hline(yintercept = 6) +
   theme_bw()
 ggsave("outputs/burden_holc_boxplot1.png")
 
