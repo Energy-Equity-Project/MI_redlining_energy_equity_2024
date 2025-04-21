@@ -1,7 +1,13 @@
+# R Setup Files
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
-.DS_Store
-data/
 *.Rproj
+
+# MacOS Directory File
+.DS_Store
+
+# Inputs and Outputs including .csv and images
+data/
+outputs/
